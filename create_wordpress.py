@@ -201,8 +201,8 @@ def create_wordpress_site(site_name, wp_path=WP_PATH, db_host=DB_HOST, db_user=D
             wp_cli = shutil.which('wp.bat') or shutil.which('wp') or 'wp'
             
             # Use custom WP-CLI if available
-            if os.path.exists("C:\\wp-cli\\wp-cli.phar"):
-                wp_cli = 'php "C:\\wp-cli\\wp-cli.phar"'
+           
+        wp_cli = 'php "C:\\wp-cli\\wp-cli.phar"'
             
         # Command as a string for Windows compatibility
         install_command = f'"{wp_cli}" core install --url=https://{site_name}.test --title="{site_title}" --admin_user={admin_user} --admin_password={admin_pass} --admin_email={admin_email} --path="{site_path}"'
