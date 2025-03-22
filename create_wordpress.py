@@ -9,20 +9,37 @@ import random
 import string
 import mysql.connector
 import shutil
+import argparse
 
-def create_wordpress_site(site_name, db_host="localhost", db_user="root", db_pass="elcana100"):
+# Configuration variables for Laravel Herd
+WP_PATH = "D:\\domains"  # Windows path for domains directory
+DB_HOST = "localhost"
+DB_USER = "root"
+DB_PASS = "elcana100"
+SITE_TITLE = "WordPress"
+ADMIN_USER = "admin"
+ADMIN_PASS = "elcana100"
+ADMIN_EMAIL = "admin@example.com"
+
+def create_wordpress_site(site_name, wp_path=WP_PATH, db_host=DB_HOST, db_user=DB_USER, db_pass=DB_PASS, 
+                         site_title=SITE_TITLE, admin_user=ADMIN_USER, admin_pass=ADMIN_PASS, admin_email=ADMIN_EMAIL):
     """
     Create a fresh WordPress site in Laravel Herd environment
     
     Args:
         site_name: Name of the site (will be used for folder and database name)
+        wp_path: Base path for WordPress sites
         db_host: Database host
         db_user: Database username
         db_pass: Database password
+        site_title: Title for the WordPress site
+        admin_user: WordPress admin username
+        admin_pass: WordPress admin password
+        admin_email: WordPress admin email
     """
     
     # Define paths - use normpath to handle path separators correctly
-    domains_path = os.path.normpath("D:\\domains")
+    domains_path = os.path.normpath(wp_path)
     site_path = os.path.normpath(os.path.join(domains_path, site_name))
     
     # Check if site directory already exists
@@ -184,7 +201,7 @@ def create_wordpress_site(site_name, db_host="localhost", db_user="root", db_pas
             wp_cli = shutil.which('wp.bat') or shutil.which('wp') or 'wp'
         
         # Command as a string for Windows compatibility
-        install_command = f'"{wp_cli}" core install --url=https://{site_name}.test --title=WordPress --admin_user=admin --admin_password=elcana100 --admin_email=admin@example.com --path="{site_path}"'
+        install_command = f'"{wp_cli}" core install --url=https://{site_name}.test --title="{site_title}" --admin_user={admin_user} --admin_password={admin_pass} --admin_email={admin_email} --path="{site_path}"'
         
         # Use shell=True for Windows
         try:
@@ -211,7 +228,7 @@ def create_wordpress_site(site_name, db_host="localhost", db_user="root", db_pas
                 f.write(f"path: {site_path}\n")
             
             # Try again with simpler command - use cmd.exe explicitly for Windows
-            alt_command = f'cd "{site_path}" && cmd /c "{wp_cli}" core install --url=https://{site_name}.test --title=WordPress --admin_user=admin --admin_password=elcana100 --admin_email=admin@example.com'
+            alt_command = f'cd "{site_path}" && cmd /c "{wp_cli}" core install --url=https://{site_name}.test --title="{site_title}" --admin_user={admin_user} --admin_password={admin_pass} --admin_email={admin_email}'
             try:
                 alt_result = subprocess.run(alt_command, shell=True, check=False, capture_output=True, text=True, timeout=30)
             except subprocess.TimeoutExpired:
@@ -226,7 +243,7 @@ def create_wordpress_site(site_name, db_host="localhost", db_user="root", db_pas
                     print(f"  {alt_command}")
                 
                 # Try PowerShell as a last resort
-                ps_command = f'powershell -Command "cd \'{site_path}\'; & \'{wp_cli}\' core install --url=https://{site_name}.test --title=WordPress --admin_user=admin --admin_password=elcana100 --admin_email=admin@example.com"'
+                ps_command = f'powershell -Command "cd \'{site_path}\'; & \'{wp_cli}\' core install --url=https://{site_name}.test --title=\'{site_title}\' --admin_user={admin_user} --admin_password={admin_pass} --admin_email={admin_email}"'
                 try:
                     ps_result = subprocess.run(ps_command, shell=True, check=False, capture_output=True, text=True, timeout=30)
                 except subprocess.TimeoutExpired:
@@ -257,7 +274,7 @@ def create_wordpress_site(site_name, db_host="localhost", db_user="root", db_pas
                     wp_cli_php = os.path.normpath(os.path.join(os.path.dirname(wp_cli_path), "../wp-cli/wp-cli/bin/wp"))
                     if os.path.exists(wp_cli_php):
                         print("\nTrying direct PHP execution method...")
-                        php_command = f'php "{wp_cli_php}" core install --url=https://{site_name}.test --title=WordPress --admin_user=admin --admin_password=elcana100 --admin_email=admin@example.com --path="{site_path}"'
+                        php_command = f'php "{wp_cli_php}" core install --url=https://{site_name}.test --title="{site_title}" --admin_user={admin_user} --admin_password={admin_pass} --admin_email={admin_email} --path="{site_path}"'
                         php_result = subprocess.run(php_command, shell=True, check=False)
                         
                         if php_result.returncode == 0:
@@ -271,10 +288,10 @@ def create_wordpress_site(site_name, db_host="localhost", db_user="root", db_pas
         print("Please complete the installation manually at:")
         print(f"https://{site_name}.test/wp-admin/install.php")
         print("Use the following details:")
-        print("  Site Title: WordPress")
-        print("  Username: admin")
-        print("  Password: elcana100")
-        print("  Email: admin@example.com")
+        print(f"  Site Title: {site_title}")
+        print(f"  Username: {admin_user}")
+        print(f"  Password: {admin_pass}")
+        print(f"  Email: {admin_email}")
         
         # Solution for the 'sh' not found error
         if "'sh' is not recognized" in str(e):
@@ -294,9 +311,32 @@ def create_wordpress_site(site_name, db_host="localhost", db_user="root", db_pas
     return True
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        site_name = sys.argv[1]
-    else:
-        site_name = input("Enter site name: ")
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Create a fresh WordPress site in Laravel Herd environment")
+    parser.add_argument("site_name", help="Name of the site (will be used for folder and database name)", nargs="?")
+    parser.add_argument("--wp-path", default=WP_PATH, help=f"Base path for WordPress sites (default: {WP_PATH})")
+    parser.add_argument("--db-host", default=DB_HOST, help=f"Database host (default: {DB_HOST})")
+    parser.add_argument("--db-user", default=DB_USER, help=f"Database username (default: {DB_USER})")
+    parser.add_argument("--db-pass", default=DB_PASS, help=f"Database password (default: {DB_PASS})")
+    parser.add_argument("--title", default=SITE_TITLE, help=f"WordPress site title (default: {SITE_TITLE})")
+    parser.add_argument("--admin-user", default=ADMIN_USER, help=f"WordPress admin username (default: {ADMIN_USER})")
+    parser.add_argument("--admin-pass", default=ADMIN_PASS, help=f"WordPress admin password (default: {ADMIN_PASS})")
+    parser.add_argument("--admin-email", default=ADMIN_EMAIL, help=f"WordPress admin email (default: {ADMIN_EMAIL})")
     
-    create_wordpress_site(site_name)
+    args = parser.parse_args()
+    
+    # If site_name wasn't provided as positional argument, prompt for it
+    site_name = args.site_name if args.site_name else input("Enter site name: ")
+    
+    # Create WordPress site with the provided or default arguments
+    create_wordpress_site(
+        site_name=site_name,
+        wp_path=args.wp_path,
+        db_host=args.db_host,
+        db_user=args.db_user,
+        db_pass=args.db_pass,
+        site_title=args.title,
+        admin_user=args.admin_user,
+        admin_pass=args.admin_pass,
+        admin_email=args.admin_email
+    )
