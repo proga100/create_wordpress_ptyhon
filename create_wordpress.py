@@ -21,9 +21,9 @@ def create_wordpress_site(site_name, db_host="localhost", db_user="root", db_pas
         db_pass: Database password
     """
     
-    # Define paths
-    domains_path = "D:\\domains"
-    site_path = os.path.join(domains_path, site_name)
+    # Define paths - use normpath to handle path separators correctly
+    domains_path = os.path.normpath("D:\\domains")
+    site_path = os.path.normpath(os.path.join(domains_path, site_name))
     
     # Check if site directory already exists
     if os.path.exists(site_path):
@@ -148,12 +148,19 @@ def create_wordpress_site(site_name, db_host="localhost", db_user="root", db_pas
     print("Completing WordPress installation...")
     try:
         # Check for WP-CLI in composer path
-        wp_cli_path = "D:\\open538\\userdata\\composer\\vendor\\bin\\wp.BAT"
-        if not os.path.exists(wp_cli_path):
-            wp_cli_path = shutil.which('wp.bat') or shutil.which('wp') or 'wp'
+        wp_cli_path = os.path.normpath("D:\\open538\\userdata\\composer\\vendor\\bin\\wp.BAT")
+        wp_cli_phar = os.path.normpath("D:\\open538\\userdata\\composer\\vendor\\wp-cli\\wp-cli\\wp-cli.phar")
+        
+        # Try different WP-CLI options
+        if os.path.exists(wp_cli_path):
+            wp_cli = wp_cli_path.replace('\\', '\\\\')
+        elif os.path.exists(wp_cli_phar):
+            wp_cli = f"php {wp_cli_phar.replace('\\', '\\\\')}"
+        else:
+            wp_cli = shutil.which('wp.bat') or shutil.which('wp') or 'wp'
         
         # Command as a string for Windows compatibility
-        install_command = f'"{wp_cli_path}" core install --url=https://{site_name}.test --title=WordPress --admin_user=admin --admin_password=elcana100 --admin_email=admin@example.com --path="{site_path}"'
+        install_command = f'"{wp_cli}" core install --url=https://{site_name}.test --title=WordPress --admin_user=admin --admin_password=elcana100 --admin_email=admin@example.com --path="{site_path}"'
         
         # Use shell=True for Windows
         result = subprocess.run(install_command, shell=True, check=False, capture_output=True, text=True)
@@ -168,12 +175,17 @@ def create_wordpress_site(site_name, db_host="localhost", db_user="root", db_pas
             with open(os.path.join(site_path, "wp-cli.yml"), "w") as f:
                 f.write(f"path: {site_path}\n")
             
-            # Try again with simpler command
-            alt_command = f'cd "{site_path}" && "{wp_cli_path}" core install --url=https://{site_name}.test --title=WordPress --admin_user=admin --admin_password=elcana100 --admin_email=admin@example.com'
+            # Try again with simpler command - use cmd.exe explicitly for Windows
+            alt_command = f'cd "{site_path}" && cmd /c "{wp_cli}" core install --url=https://{site_name}.test --title=WordPress --admin_user=admin --admin_password=elcana100 --admin_email=admin@example.com'
             alt_result = subprocess.run(alt_command, shell=True, check=False)
             
             if alt_result.returncode != 0:
-                raise Exception("Both installation methods failed")
+                # Try PowerShell as a last resort
+                ps_command = f'powershell -Command "cd \'{site_path}\'; & \'{wp_cli}\' core install --url=https://{site_name}.test --title=WordPress --admin_user=admin --admin_password=elcana100 --admin_email=admin@example.com"'
+                ps_result = subprocess.run(ps_command, shell=True, check=False)
+                
+                if ps_result.returncode != 0:
+                    raise Exception("All installation methods failed")
             
     except Exception as e:
         print(f"Error completing WordPress installation: {e}")
