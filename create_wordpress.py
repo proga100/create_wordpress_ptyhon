@@ -138,11 +138,17 @@ def create_wordpress_site(site_name, db_host="localhost", db_user="root", db_pas
     
     # Register site with Herd
     print("Registering site with Laravel Herd...")
-    subprocess.run(f'herd park {site_path}', shell=True)
+    try:
+        subprocess.run(f'herd park {site_path}', shell=True, timeout=30)
+    except subprocess.TimeoutExpired:
+        print("Command timed out but may have still completed. Continuing...")
     
     # Secure the site (optional, for HTTPS)
     print("Securing site with SSL certificate...")
-    subprocess.run(f'herd secure {site_name}.test', shell=True)
+    try:
+        subprocess.run(f'herd secure {site_name}.test', shell=True, timeout=30)
+    except subprocess.TimeoutExpired:
+        print("Command timed out but may have still completed. Continuing...")
     
     # Install WordPress via WP-CLI
     print("Completing WordPress installation...")
@@ -154,6 +160,24 @@ def create_wordpress_site(site_name, db_host="localhost", db_user="root", db_pas
         # Try different WP-CLI options
         if os.path.exists(wp_cli_path):
             wp_cli = wp_cli_path.replace('\\', '\\\\')
+            
+            # Fix WP-CLI batch file if needed
+            try:
+                with open(wp_cli_path, 'r') as f:
+                    bat_content = f.read()
+                    if 'sh "%BIN_TARGET%"' in bat_content:
+                        print("Detected 'sh' in WP-CLI batch file. Creating fixed version...")
+                        # Create fixed version of batch file
+                        fixed_bat_path = os.path.join(os.path.dirname(wp_cli_path), "wp-fixed.bat")
+                        with open(fixed_bat_path, 'w') as fw:
+                            # Replace 'sh' with 'cmd /c'
+                            fixed_content = bat_content.replace('sh "%BIN_TARGET%" %*', 'cmd /c php "%BIN_TARGET%" %*')
+                            fw.write(fixed_content)
+                        print(f"Created fixed WP-CLI batch file at: {fixed_bat_path}")
+                        # Use the fixed version
+                        wp_cli = fixed_bat_path.replace('\\', '\\\\')
+            except Exception as e:
+                print(f"Error fixing WP-CLI batch file: {e}")
         elif os.path.exists(wp_cli_phar):
             wp_cli = f"php {wp_cli_phar.replace('\\', '\\\\')}"
         else:
@@ -163,12 +187,23 @@ def create_wordpress_site(site_name, db_host="localhost", db_user="root", db_pas
         install_command = f'"{wp_cli}" core install --url=https://{site_name}.test --title=WordPress --admin_user=admin --admin_password=elcana100 --admin_email=admin@example.com --path="{site_path}"'
         
         # Use shell=True for Windows
-        result = subprocess.run(install_command, shell=True, check=False, capture_output=True, text=True)
+        try:
+            result = subprocess.run(install_command, shell=True, check=False, capture_output=True, text=True, timeout=30)
+        except subprocess.TimeoutExpired:
+            print("WP-CLI command timed out. Trying alternative methods...")
+            result = subprocess.CompletedProcess(args=install_command, returncode=1, stdout="", stderr="Command timed out")
         
         if result.returncode == 0:
             print("WordPress installation completed successfully!")
         else:
             print(f"WP-CLI error: {result.stderr}")
+            
+            # Check if this is the "sh not found" error
+            if "'sh' is not recognized" in result.stderr:
+                print("\nDETECTED 'SH' ERROR - This is a common error on Windows systems")
+                print("Command that failed:")
+                print(f"  {install_command}")
+            
             print("Attempting alternative installation method...")
             
             # Alternative: Create wp-cli.yml file and try again
@@ -177,14 +212,58 @@ def create_wordpress_site(site_name, db_host="localhost", db_user="root", db_pas
             
             # Try again with simpler command - use cmd.exe explicitly for Windows
             alt_command = f'cd "{site_path}" && cmd /c "{wp_cli}" core install --url=https://{site_name}.test --title=WordPress --admin_user=admin --admin_password=elcana100 --admin_email=admin@example.com'
-            alt_result = subprocess.run(alt_command, shell=True, check=False)
+            try:
+                alt_result = subprocess.run(alt_command, shell=True, check=False, capture_output=True, text=True, timeout=30)
+            except subprocess.TimeoutExpired:
+                print("Alternative command timed out. Trying next method...")
+                alt_result = subprocess.CompletedProcess(args=alt_command, returncode=1, stdout="", stderr="Command timed out")
             
             if alt_result.returncode != 0:
+                # Check for sh error in the alternative command
+                if alt_result.stderr and "'sh' is not recognized" in alt_result.stderr:
+                    print("\nDETECTED 'SH' ERROR in alternative method - This is a common error on Windows systems")
+                    print("Command that failed:")
+                    print(f"  {alt_command}")
+                
                 # Try PowerShell as a last resort
                 ps_command = f'powershell -Command "cd \'{site_path}\'; & \'{wp_cli}\' core install --url=https://{site_name}.test --title=WordPress --admin_user=admin --admin_password=elcana100 --admin_email=admin@example.com"'
-                ps_result = subprocess.run(ps_command, shell=True, check=False)
+                try:
+                    ps_result = subprocess.run(ps_command, shell=True, check=False, capture_output=True, text=True, timeout=30)
+                except subprocess.TimeoutExpired:
+                    print("PowerShell command timed out.")
+                    ps_result = subprocess.CompletedProcess(args=ps_command, returncode=1, stdout="", stderr="Command timed out")
                 
                 if ps_result.returncode != 0:
+                    # Check for sh error in PowerShell method
+                    if ps_result.stderr and "'sh' is not recognized" in ps_result.stderr:
+                        print("\nDETECTED 'SH' ERROR in PowerShell method - This is a common error on Windows systems")
+                        print("Command that failed:")
+                        print(f"  {ps_command}")
+                    
+                    # Try to find the actual wp-cli script to examine it
+                    if os.path.exists(wp_cli_path) and wp_cli_path.lower().endswith('.bat'):
+                        try:
+                            print("\nExamining WP-CLI batch file contents to find the issue:")
+                            with open(wp_cli_path, 'r') as f:
+                                bat_content = f.read()
+                                print(bat_content)
+                                # Look for sh in the batch file
+                                if 'sh' in bat_content:
+                                    print("\nFound 'sh' references in the WP-CLI batch file. This is likely causing the error.")
+                        except Exception as e:
+                            print(f"Error reading WP-CLI batch file: {e}")
+                    
+                    # Try using PHP directly to set up WordPress if we can find the script
+                    wp_cli_php = os.path.normpath(os.path.join(os.path.dirname(wp_cli_path), "../wp-cli/wp-cli/bin/wp"))
+                    if os.path.exists(wp_cli_php):
+                        print("\nTrying direct PHP execution method...")
+                        php_command = f'php "{wp_cli_php}" core install --url=https://{site_name}.test --title=WordPress --admin_user=admin --admin_password=elcana100 --admin_email=admin@example.com --path="{site_path}"'
+                        php_result = subprocess.run(php_command, shell=True, check=False)
+                        
+                        if php_result.returncode == 0:
+                            print("WordPress installed successfully using direct PHP method!")
+                            return True
+                    
                     raise Exception("All installation methods failed")
             
     except Exception as e:
@@ -196,6 +275,15 @@ def create_wordpress_site(site_name, db_host="localhost", db_user="root", db_pas
         print("  Username: admin")
         print("  Password: elcana100")
         print("  Email: admin@example.com")
+        
+        # Solution for the 'sh' not found error
+        if "'sh' is not recognized" in str(e):
+            print("\nSOLUTION FOR 'SH' ERROR:")
+            print("The error is caused by WP-CLI trying to use the 'sh' shell which is not available on Windows.")
+            print("Options to fix this:")
+            print("1. Install Git Bash which provides 'sh' on Windows")
+            print("2. Edit the WP-CLI batch file to use 'cmd' instead of 'sh'")
+            print("3. Use the WordPress web installer manually (recommended for Windows users)")
     
     # Done!
     print("\nWordPress site created successfully!")
