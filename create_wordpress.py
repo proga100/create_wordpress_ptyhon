@@ -199,10 +199,14 @@ def create_wordpress_site(site_name, wp_path=WP_PATH, db_host=DB_HOST, db_user=D
             wp_cli = f"php {wp_cli_phar.replace('\\', '\\\\')}"
         else:
             wp_cli = shutil.which('wp.bat') or shutil.which('wp') or 'wp'
-        
+            
+            # Use custom WP-CLI if available
+            if os.path.exists("C:\\wp-cli\\wp-cli.phar"):
+                wp_cli = 'php "C:\\wp-cli\\wp-cli.phar"'
+            
         # Command as a string for Windows compatibility
         install_command = f'"{wp_cli}" core install --url=https://{site_name}.test --title="{site_title}" --admin_user={admin_user} --admin_password={admin_pass} --admin_email={admin_email} --path="{site_path}"'
-        
+        print(install_command); exit();
         # Use shell=True for Windows
         try:
             result = subprocess.run(install_command, shell=True, check=False, capture_output=True, text=True, timeout=30)
