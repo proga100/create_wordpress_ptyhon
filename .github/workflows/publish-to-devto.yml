@@ -25,5 +25,9 @@ jobs:
       - name: Initialize Dev.to CLI
         run: npx @sinedied/devto-cli init --skip-git --token ${{ secrets.DEVTO_API_KEY }} --repo ${{ github.repository }}
 
+      - name: Check Dev.to API with Dry Run
+        run: npx @sinedied/devto-cli push articles/*.md --token ${{ secrets.DEVTO_API_KEY }} --repo ${{ github.repository }} --reconcile --dry-run --verbose
+
       - name: Publish to Dev.to
+        if: false  # Temporarily disable this step until we resolve the issues
         run: npx @sinedied/devto-cli push articles/*.md --token ${{ secrets.DEVTO_API_KEY }} --repo ${{ github.repository }} --reconcile
