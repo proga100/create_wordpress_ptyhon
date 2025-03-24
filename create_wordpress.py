@@ -171,45 +171,28 @@ def create_wordpress_site(site_name, wp_path=WP_PATH, db_host=DB_HOST, db_user=D
     print("Completing WordPress installation...")
     try:
         # Check for WP-CLI in composer path
-        wp_cli_path = os.path.normpath("D:\\open538\\userdata\\composer\\vendor\\bin\\wp.BAT")
-        wp_cli_phar = os.path.normpath("D:\\open538\\userdata\\composer\\vendor\\wp-cli\\wp-cli\\wp-cli.phar")
+    
         
         # Try different WP-CLI options
-        if os.path.exists(wp_cli_path):
-            wp_cli = wp_cli_path.replace('\\', '\\\\')
-            
-            # Fix WP-CLI batch file if needed
-            try:
-                with open(wp_cli_path, 'r') as f:
-                    bat_content = f.read()
-                    if 'sh "%BIN_TARGET%"' in bat_content:
-                        print("Detected 'sh' in WP-CLI batch file. Creating fixed version...")
-                        # Create fixed version of batch file
-                        fixed_bat_path = os.path.join(os.path.dirname(wp_cli_path), "wp-fixed.bat")
-                        with open(fixed_bat_path, 'w') as fw:
-                            # Replace 'sh' with 'cmd /c'
-                            fixed_content = bat_content.replace('sh "%BIN_TARGET%" %*', 'cmd /c php "%BIN_TARGET%" %*')
-                            fw.write(fixed_content)
-                        print(f"Created fixed WP-CLI batch file at: {fixed_bat_path}")
-                        # Use the fixed version
-                        wp_cli = fixed_bat_path.replace('\\', '\\\\')
-            except Exception as e:
-                print(f"Error fixing WP-CLI batch file: {e}")
-        elif os.path.exists(wp_cli_phar):
-            wp_cli = f"php {wp_cli_phar.replace('\\', '\\\\')}"
-        else:
-            wp_cli = shutil.which('wp.bat') or shutil.which('wp') or 'wp'
+       
             
             # Use custom WP-CLI if available
            
-        wp_cli = 'php "C:\\wp-cli\\wp-cli.phar"'
+        wp_cli = 'php C:/wp-cli/wp-cli.phar'
             
         # Command as a string for Windows compatibility
         install_command = f'"{wp_cli}" core install --url=https://{site_name}.test --title="{site_title}" --admin_user={admin_user} --admin_password={admin_pass} --admin_email={admin_email} --path="{site_path}"'
-        print(install_command); exit();
+        
         # Use shell=True for Windows
         try:
-            result = subprocess.run(install_command, shell=True, check=False, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(['php', 'C:/wp-cli/wp-cli.phar', 'core', 'install', 
+                                     '--url=https://' + site_name + '.test',
+                                     '--title=' + site_title,
+                                     '--admin_user=' + admin_user,
+                                     '--admin_password=' + admin_pass,
+                                     '--admin_email=' + admin_email,
+                                     '--path=' + site_path], 
+                                    shell=False, check=False, capture_output=True, text=True, timeout=30)
         except subprocess.TimeoutExpired:
             print("WP-CLI command timed out. Trying alternative methods...")
             result = subprocess.CompletedProcess(args=install_command, returncode=1, stdout="", stderr="Command timed out")
@@ -217,7 +200,26 @@ def create_wordpress_site(site_name, wp_path=WP_PATH, db_host=DB_HOST, db_user=D
         if result.returncode == 0:
             print("WordPress installation completed successfully!")
         else:
-            print(f"WP-CLI error: {result.stderr}")
+            try:
+                # Define ASCII characters for comparison
+                ascii_chars = string.printable
+                
+                # Try to decode with different encodings
+                error_msg = result.stderr
+                if isinstance(error_msg, bytes):
+                    # Try common encodings
+                    for encoding in ['utf-8', 'cp1251', 'cp866', 'iso-8859-1']:
+                        try:
+                            decoded = error_msg.decode(encoding)
+                            if not all(c == '?' for c in decoded if c not in ascii_chars):
+                                error_msg = decoded
+                                break
+                        except:
+                            pass
+                
+                print(f"WP-CLI error: Command failed with exit code {error_msg}")
+            except:
+                print(f"WP-CLI error: [Unreadable error message]")
             
             # Check if this is the "sh not found" error
             if "'sh' is not recognized" in result.stderr:
