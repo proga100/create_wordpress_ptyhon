@@ -1,9 +1,8 @@
 ---
 title: Automating WordPress Site Creation in Laravel Herd Environments
 published: true
-description: A Python tool that streamlines WordPress development workflows 
-tags: wordpress, laravel, python, automation, webdev
-canonical_url: https://github.com/proga100/create_wordpress_ptyhon
+description: A Python tool that streamlines WordPress development workflows
+tags: wordpress, laravel, python, automation
 ---
 
 # Automating WordPress Site Creation in Laravel Herd Environments

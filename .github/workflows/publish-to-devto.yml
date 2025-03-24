@@ -14,16 +14,26 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+      - name: Install jq
+        run: sudo apt-get install -y jq
 
-      - name: Install Dev.to CLI
-        run: npm install -g @sinedied/devto-cli
-
-      - name: Initialize Dev.to CLI with Pull
-        run: npx @sinedied/devto-cli init --skip-git --pull --token ${{ secrets.DEVTO_API_KEY }} --repo ${{ github.repository }}
-
-      - name: Publish to Dev.to
-        run: npx @sinedied/devto-cli push articles/*.md --token ${{ secrets.DEVTO_API_KEY }} --repo ${{ github.repository }}
+      - name: Find and publish articles
+        run: |
+          for file in articles/*.md; do
+            if [ -f "$file" ]; then
+              echo "Publishing $file to Dev.to..."
+              CONTENT=$(cat "$file")
+              JSON_PAYLOAD=$(jq -n \
+                --arg content "$CONTENT" \
+                '{"article": {"body_markdown": $content}}')
+              
+              # Send to Dev.to API
+              response=$(curl -X POST \
+                -H "Content-Type: application/json" \
+                -H "api-key: ${{ secrets.DEVTO_API_KEY }}" \
+                -d "$JSON_PAYLOAD" \
+                https://dev.to/api/articles)
+              
+              echo "API Response: $response"
+            fi
+          done
