@@ -168,15 +168,8 @@ def create_wordpress_site(site_name, wp_path=WP_PATH, db_host=DB_HOST, db_user=D
         print("Command timed out but may have still completed. Continuing...")
     
     # Install WordPress via WP-CLI
-    print("Completing WordPress installation...")
+    print("Completingfd WordPress installation...")
     try:
-        # Check for WP-CLI in composer path
-    
-        
-        # Try different WP-CLI options
-       
-            
-            # Use custom WP-CLI if available
            
         wp_cli = 'php C:/wp-cli/wp-cli.phar'
             
@@ -185,7 +178,7 @@ def create_wordpress_site(site_name, wp_path=WP_PATH, db_host=DB_HOST, db_user=D
         
         # Use shell=True for Windows
         try:
-            result = subprocess.run(['php', 'C:/wp-cli/wp-cli.phar', 'core', 'install', 
+            result = subprocess.run(['C:/Users/Rusty/.config/herd/bin/php.bat', 'C:/wp-cli/wp-cli.phar', 'core', 'install', 
                                      '--url=https://' + site_name + '.test',
                                      '--title=' + site_title,
                                      '--admin_user=' + admin_user,
@@ -193,11 +186,16 @@ def create_wordpress_site(site_name, wp_path=WP_PATH, db_host=DB_HOST, db_user=D
                                      '--admin_email=' + admin_email,
                                      '--path=' + site_path], 
                                     shell=False, check=False, capture_output=True, text=True, timeout=30)
+            print(result.stderr)
+            print('wtest--- ')
         except subprocess.TimeoutExpired:
             print("WP-CLI command timed out. Trying alternative methods...")
             result = subprocess.CompletedProcess(args=install_command, returncode=1, stdout="", stderr="Command timed out")
-        
+        print(result.stderr)
+
         if result.returncode == 0:
+            print(result.stderr)
+            print('dtest--- ')
             print("WordPress installation completed successfully!")
         else:
             try:
