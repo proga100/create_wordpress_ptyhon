@@ -22,5 +22,8 @@ jobs:
       - name: Install Dev.to CLI
         run: npm install -g @sinedied/devto-cli
 
+      - name: Initialize Dev.to CLI
+        run: npx @sinedied/devto-cli init --skip-git --token ${{ secrets.DEVTO_API_KEY }} --repo ${{ github.repository }}
+
       - name: Publish to Dev.to
-        run: npx @sinedied/devto-cli push articles/*.md --token ${{ secrets.DEVTO_API_KEY }} --repo ${{ github.repository }}
+        run: npx @sinedied/devto-cli push articles/*.md --token ${{ secrets.DEVTO_API_KEY }} --repo ${{ github.repository }} --reconcile
