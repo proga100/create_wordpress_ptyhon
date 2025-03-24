@@ -1,0 +1,28 @@
+name: Publish to Medium
+
+on:
+  push:
+    branches:
+      - main  # Trigger the workflow on pushes to the main branch
+    paths:
+      - '**.md'  # Only trigger when Markdown files change
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Publish to Medium
+        uses: protiumx/blogpub@v1
+        with:
+          medium-token: ${{ secrets.MEDIUM_TOKEN }}
+          devto-token: ''  # Leave empty if not publishing to Dev.to
+          medium-publication-id: ''  # Optional: Add your publication ID if publishing to a Medium publication
+          medium-author-id: ''  # Optional: Your Medium author ID
+          run-name: 'Publish WordPress Automation Article'
+          files: |
+            wordpress-automation-tool.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

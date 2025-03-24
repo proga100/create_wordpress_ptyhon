@@ -1,0 +1,21 @@
+name: Publish to Dev.to
+
+on:
+  push:
+    branches:
+      - main  # Trigger the workflow on pushes to the main branch
+    paths:
+      - 'articles/**.md'  # Only trigger for Markdown files in the 'articles' folder
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Publish to Dev.to
+        uses: sinedied/devto-cli@main
+        with:
+          api-key: ${{ secrets.DEVTO_API_KEY }}
+          files: 'articles/*.md' 
