@@ -8,6 +8,7 @@ tags: wordpress, laravel, python, automation, webdev
 
 
 
+
 # Automating WordPress Site Creation in Laravel Herd Environments
 
 *A Python tool that streamlines WordPress development workflows*
