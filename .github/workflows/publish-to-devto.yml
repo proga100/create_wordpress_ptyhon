@@ -3,7 +3,7 @@ name: Publish to Dev.to
 on:
   push:
     branches:
-      - main  # Trigger the workflow on pushes to the main branch [[1]]
+      - main  # Trigger the workflow on pushes to the main branch
     paths:
       - 'articles/**.md'  # Only trigger for Markdown files in the 'articles' folder
 
@@ -14,8 +14,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Publish to Dev.to
-        uses: sinedied/devto-cli@v1  # Use a specific release (e.g., v1) instead of the main branch [[6]]
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          api-key: ${{ secrets.DEVTO_API_KEY }}
-          files: 'articles/*.md'
+          node-version: '16'
+
+      - name: Install Dev.to CLI
+        run: npm install -g @sinedied/devto-cli
+
+      - name: Publish to Dev.to
+        run: devto publish articles/*.md --key ${{ secrets.DEVTO_API_KEY }}
