@@ -115,6 +115,16 @@ If you see errors about 'sh' not being recognized:
 2. Make sure MySQL server is running
 3. Check for database name conflicts
 
+## Contact & Support
+
+This WordPress automation tool was created by Rusty.
+
+For WordPress development, site creation, or customization services:
+- Email: tutyou1972@gmail.com
+- LinkedIn: [https://www.linkedin.com/in/rustywordpress/](https://www.linkedin.com/in/rustywordpress/)
+
+Feel free to reach out for professional WordPress development services or custom modifications to this tool.
+
 ## License
 
 This project is open source and available under the MIT License. 
