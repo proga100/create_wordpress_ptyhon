@@ -1,7 +1,7 @@
 ---
 title: Automating WordPress Site Creation in Laravel Herd Environments
 published: true
-description: A Python tool that streamlines WordPress development workflows - install
+description: A Python tool that streamlines WordPress development workflows - installation
 tags: wordpress, laravel, python, automation, webdev
 ---
 
