@@ -2,7 +2,7 @@
 title: 🚀 Slash Your WordPress Setup Time to Seconds with Python Automation
 published: true
 description: Learn how to automate WordPress site creation in Laravel Herd environments with a Python tool that reduces 30-minute setups to mere seconds
-tags: python, wordpress, automation, laravel, webdev
+tags: python, wordpress, automation, herd
 ---
 
 # 🚀 Slash Your WordPress Setup Time to Seconds with Python Automation
