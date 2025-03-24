@@ -65,6 +65,30 @@ python create_wordpress.py my-site --title="My Awesome Site" --admin-user="admin
 - `--admin-pass`: WordPress admin password (default: elcana100)
 - `--admin-email`: WordPress admin email (default: admin@example.com)
 
+## Configuration
+
+The script uses the following default configuration variables:
+
+```python
+WP_PATH = "D:\\domains"  # Windows path for domains directory
+DB_HOST = "localhost"
+DB_USER = "root"
+DB_PASS = "elcana100"
+SITE_TITLE = "WordPress"
+ADMIN_USER = "admin"
+ADMIN_PASS = "elcana100"
+ADMIN_EMAIL = "admin@example.com"
+```
+
+You can override these defaults in two ways:
+1. Using command-line arguments (recommended) as shown in the Usage section
+2. Modifying the script directly by changing these variables at the top of the file
+
+These settings determine:
+- Where WordPress sites are stored (`WP_PATH`)
+- Database connection details (`DB_HOST`, `DB_USER`, `DB_PASS`)
+- WordPress site configuration (`SITE_TITLE`, `ADMIN_USER`, `ADMIN_PASS`, `ADMIN_EMAIL`)
+
 ## Troubleshooting
 
 ### PHP Not Found
