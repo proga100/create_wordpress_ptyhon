@@ -23,4 +23,4 @@ jobs:
         run: npm install -g @sinedied/devto-cli
 
       - name: Publish to Dev.to
-        run: npx @sinedied/devto-cli publish articles/*.md --key ${{ secrets.DEVTO_API_KEY }}
+        run: npx @sinedied/devto-cli push articles/*.md --key ${{ secrets.DEVTO_API_KEY }}
